@@ -168,8 +168,8 @@ exit_label: ; \
 # define SET_MARK_BIT_EXIT_IF_SET(hhdr,bit_no,exit_label) \
     { \
         char * mark_byte_addr = (char *)hhdr -> hb_marks + (bit_no); \
-        if (*mark_byte_addr) goto exit_label; \
-        *mark_byte_addr = 1; \
+        if (*mark_byte_addr & (GC_FLAG_MARKED|GC_FLAG_UNCOLLECTABLE)) goto exit_label; \
+        *mark_byte_addr |= GC_FLAG_MARKED; \
     }
 #else
 # ifdef PARALLEL_MARK

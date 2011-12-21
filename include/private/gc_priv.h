@@ -1433,9 +1433,16 @@ struct GC_traced_stack_sect_s {
  */
 
 #ifdef USE_MARK_BYTES
+#ifdef DYNAMIC_MARKS
+# define mark_bit_from_hdr(hhdr,n) \
+	 ((hhdr)->hb_marks[n] & (GC_FLAG_MARKED|GC_FLAG_UNCOLLECTABLE))
+#else
 # define mark_bit_from_hdr(hhdr,n) ((hhdr)->hb_marks[n])
-# define set_mark_bit_from_hdr(hhdr,n) ((hhdr)->hb_marks[n] = 1)
-# define clear_mark_bit_from_hdr(hhdr,n) ((hhdr)->hb_marks[n] = 0)
+#endif
+# define set_mark_bit_from_hdr(hhdr,n) ((hhdr)->hb_marks[n] |= 1)
+# define clear_mark_bit_from_hdr(hhdr,n) ((hhdr)->hb_marks[n] &= 0xfe)
+# define set_mark_flags_from_hdr(hhdr,n,f) ((hhdr)->hb_marks[n] |= f)
+# define clear_mark_flags_from_hdr(hhdr,n,f) ((hhdr)->hb_marks[n] &= ~f)
 #else
 /* Set mark bit correctly, even if mark bits may be concurrently        */
 /* accessed.                                                            */

@@ -430,6 +430,18 @@ GC_API void GC_CALL GC_free(void *);
 GC_API void GC_CALL GC_change_stubborn(const void *) GC_ATTR_NONNULL(1);
 GC_API void GC_CALL GC_end_stubborn_change(const void *) GC_ATTR_NONNULL(1);
 
+/* Set/clear additional flags for an object.			        */
+/* Flag may not include 0x1.					        */
+
+#ifdef DYNAMIC_MARKS
+#define GC_FLAG_MARKED	      0x1	/* normal marked object */
+#define GC_FLAG_UNCOLLECTABLE 0x2	/* uncollectable object */
+#define GC_FLAG_ATOMIC        0x4	/* atomic object */
+
+GC_API void GC_set_flags(void *p, unsigned flags);
+GC_API void GC_clear_flags(void *p, unsigned flags);
+#endif
+
 /* Return a pointer to the base (lowest address) of an object given     */
 /* a pointer to a location within the object.                           */
 /* I.e., map an interior pointer to the corresponding base pointer.     */

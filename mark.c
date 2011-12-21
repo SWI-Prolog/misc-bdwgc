@@ -147,7 +147,15 @@ GC_INNER GC_bool GC_collection_in_progress(void)
 GC_INNER void GC_clear_hdr_marks(hdr *hhdr)
 {
     size_t last_bit = FINAL_MARK_BIT(hhdr -> hb_sz);
+#ifdef DYNAMIC_MARKS
+    char *mp = hhdr -> hb_marks;
+    char *ep = mp+sizeof(hhdr->hb_marks);
+
+    for(; mp<ep; mp++)
+        *mp &= ~GC_FLAG_MARKED;
+#else
     BZERO(hhdr -> hb_marks, sizeof(hhdr->hb_marks));
+#endif
     set_mark_bit_from_hdr(hhdr, last_bit);
     hhdr -> hb_n_marks = 0;
 }
@@ -232,6 +240,33 @@ GC_API int GC_CALL GC_is_marked(const void *p)
 
     return (int)mark_bit_from_hdr(hhdr, bit_no); /* 0 or 1 */
 }
+
+#ifdef DYNAMIC_MARKS
+/*
+ * Set/clear flags in the header byte.  This should not touch the
+ * least significant bit, which is the actual mark flag.
+ */
+
+GC_API void GC_set_flags(void *ptr, unsigned flags)
+{
+    ptr_t p = ptr;
+    struct hblk *h = HBLKPTR(p);
+    hdr * hhdr = HDR(h);
+    word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
+
+    set_mark_flags_from_hdr(hhdr, bit_no, flags);
+}
+
+GC_API void GC_clear_flags(void *ptr, unsigned flags)
+{
+    ptr_t p = ptr;
+    struct hblk *h = HBLKPTR(p);
+    hdr * hhdr = HDR(h);
+    word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
+
+    clear_mark_flags_from_hdr(hhdr, bit_no, flags);
+}
+#endif /*DYNAMIC_MARKS*/
 
 /*
  * Clear mark bits in all allocated heap blocks.  This invalidates

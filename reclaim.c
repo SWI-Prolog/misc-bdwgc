@@ -478,7 +478,12 @@ int GC_n_set_marks(hdr *hhdr)
     int limit = (int)FINAL_MARK_BIT(sz);
 
     for (i = 0; i < limit; i += offset) {
-        result += hhdr -> hb_marks[i];
+#ifdef DYNAMIC_MARKS
+        if ( hhdr -> hb_marks[i] & (GC_FLAG_MARKED|GC_FLAG_UNCOLLECTABLE) )
+	    result++;
+#else
+	result += hhdr -> hb_marks[i];
+#endif
     }
     GC_ASSERT(hhdr -> hb_marks[limit]);
     return(result);

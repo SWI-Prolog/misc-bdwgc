@@ -150,14 +150,20 @@ GC_INNER void GC_clear_hdr_marks(hdr *hhdr)
 #ifdef DYNAMIC_MARKS
     char *mp = hhdr -> hb_marks;
     char *ep = mp+sizeof(hhdr->hb_marks);
+    size_t uncollectable = 0;
 
-    for(; mp<ep; mp++)
-        *mp &= ~GC_FLAG_MARKED;
+    for(; mp<ep; mp++) {
+        if ( *mp & GC_FLAG_UNCOLLECTABLE )
+	    uncollectable++;
+	else
+	    *mp &= ~GC_FLAG_MARKED;
+    }
+    hhdr -> hb_n_marks = uncollectable;
 #else
     BZERO(hhdr -> hb_marks, sizeof(hhdr->hb_marks));
+    hhdr -> hb_n_marks = 0;
 #endif
     set_mark_bit_from_hdr(hhdr, last_bit);
-    hhdr -> hb_n_marks = 0;
 }
 
 /* Set all mark bits in the header.  Used for uncollectable blocks. */
@@ -254,6 +260,9 @@ GC_API void GC_set_flags(void *ptr, unsigned flags)
     hdr * hhdr = HDR(h);
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
 
+    if ( (flags&GC_FLAG_UNCOLLECTABLE) &&
+	 !mark_bit_from_hdr(hhdr, bit_no) )
+      ++hhdr -> hb_n_marks;
     set_mark_flags_from_hdr(hhdr, bit_no, flags);
 }
 

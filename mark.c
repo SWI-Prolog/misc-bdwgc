@@ -147,22 +147,27 @@ GC_INNER GC_bool GC_collection_in_progress(void)
 GC_INNER void GC_clear_hdr_marks(hdr *hhdr)
 {
     size_t last_bit = FINAL_MARK_BIT(hhdr -> hb_sz);
-#ifdef DYNAMIC_MARKS
-    char *mp = hhdr -> hb_marks;
-    char *ep = mp+sizeof(hhdr->hb_marks);
-    size_t uncollectable = 0;
+#   ifdef DYNAMIC_MARKS
+    if (hhdr -> hb_n_uncollectable > 0) {
+	char *mp = hhdr -> hb_marks;
+	char *ep = mp+sizeof(hhdr->hb_marks);
+	size_t uncollectable = 0;
 
-    for(; mp<ep; mp++) {
-        if ( *mp & GC_FLAG_UNCOLLECTABLE )
-	    uncollectable++;
-	else
-	    *mp &= ~GC_FLAG_MARKED;
+	for(; mp<ep; mp++) {
+	    if ( *mp & GC_FLAG_UNCOLLECTABLE )
+		uncollectable++;
+	    else
+		*mp &= ~GC_FLAG_MARKED;
+	}
+	hhdr -> hb_n_marks = uncollectable;
+    } else {
+        BZERO(hhdr -> hb_marks, sizeof(hhdr->hb_marks));
+	hhdr -> hb_n_marks = 0;
     }
-    hhdr -> hb_n_marks = uncollectable;
-#else
+#   else
     BZERO(hhdr -> hb_marks, sizeof(hhdr->hb_marks));
     hhdr -> hb_n_marks = 0;
-#endif
+#   endif
     set_mark_bit_from_hdr(hhdr, last_bit);
 }
 
@@ -200,6 +205,10 @@ static void clear_marks_for_block(struct hblk *h, word dummy GC_ATTR_UNUSED)
         /* Mark bit for these is cleared only once the object is        */
         /* explicitly deallocated.  This either frees the block, or     */
         /* the bit is cleared once the object is on the free list.      */
+#   ifdef DYNAMIC_MARKS
+    if (hhdr -> hb_n_uncollectable == HBLK_OBJS(hhdr -> hb_sz))
+	return;
+#   endif
     GC_clear_hdr_marks(hhdr);
 }
 
@@ -261,8 +270,11 @@ GC_API void GC_set_flags(void *ptr, unsigned flags)
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
 
     if ( (flags&GC_FLAG_UNCOLLECTABLE) &&
-	 !mark_bit_from_hdr(hhdr, bit_no) )
-      ++hhdr -> hb_n_marks;
+	 !(flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE) ) {
+        ++hhdr->hb_n_uncollectable;
+        if ( !mark_bit_from_hdr(hhdr, bit_no) )
+	    ++hhdr -> hb_n_marks;
+    }
     set_mark_flags_from_hdr(hhdr, bit_no, flags);
 }
 
@@ -272,6 +284,13 @@ GC_API void GC_clear_flags(void *ptr, unsigned flags)
     struct hblk *h = HBLKPTR(p);
     hdr * hhdr = HDR(h);
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
+
+    if ( (flags&GC_FLAG_UNCOLLECTABLE) &&
+	 (flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE) ) {
+        --hhdr->hb_n_uncollectable;
+//      if ( mark_bit_from_hdr(hhdr, bit_no) )
+//	    --hhdr -> hb_n_marks;		/* dangerous? */
+    }
 
     clear_mark_flags_from_hdr(hhdr, bit_no, flags);
 }

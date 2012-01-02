@@ -925,6 +925,10 @@ struct hblkhdr {
                                 /* same object due to a race.           */
                                 /* Without parallel marking, the count  */
                                 /* is accurate.                         */
+#   ifdef DYNAMIC_MARKS
+    counter_t hb_n_uncollectable; /* Number of objects with             */
+				/* GC_FLAG_UNCOLLECTABLE in block.      */
+#   endif
 #   ifdef USE_MARK_BYTES
 #     define MARK_BITS_SZ (MARK_BITS_PER_HBLK + 1)
         /* Unlike the other case, this is in units of bytes.            */
@@ -1443,6 +1447,7 @@ struct GC_traced_stack_sect_s {
 # define clear_mark_bit_from_hdr(hhdr,n) ((hhdr)->hb_marks[n] &= 0xfe)
 # define set_mark_flags_from_hdr(hhdr,n,f) ((hhdr)->hb_marks[n] |= f)
 # define clear_mark_flags_from_hdr(hhdr,n,f) ((hhdr)->hb_marks[n] &= ~f)
+# define flags_from_hdr(hhdr,n) ((hhdr)->hb_marks[n])
 #else
 /* Set mark bit correctly, even if mark bits may be concurrently        */
 /* accessed.                                                            */

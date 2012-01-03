@@ -497,6 +497,9 @@ GC_API void GC_CALL GC_free(void * p)
     knd = hhdr -> hb_obj_kind;
     ok = &GC_obj_kinds[knd];
     if (EXPECT(ngranules <= MAXOBJGRANULES, TRUE)) {
+#       ifdef DYNAMIC_MARKS
+        word bit_no = MARK_BIT_NO((ptr_t)p - (ptr_t)h, hhdr -> hb_sz);
+#       endif
         LOCK();
         GC_bytes_freed += sz;
         if (IS_UNCOLLECTABLE(knd)) GC_non_gc_bytes -= sz;
@@ -509,6 +512,10 @@ GC_API void GC_CALL GC_free(void * p)
         flh = &(ok -> ok_freelist[ngranules]);
         obj_link(p) = *flh;
         *flh = (ptr_t)p;
+#       ifdef DYNAMIC_MARKS
+	if (flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE)
+	    --hhdr -> hb_n_uncollectable;
+#       endif
         UNLOCK();
     } else {
         size_t nblocks = OBJ_SZ_TO_BLOCKS(sz);

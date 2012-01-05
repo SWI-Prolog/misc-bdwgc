@@ -206,7 +206,8 @@ static void clear_marks_for_block(struct hblk *h, word dummy GC_ATTR_UNUSED)
         /* explicitly deallocated.  This either frees the block, or     */
         /* the bit is cleared once the object is on the free list.      */
 #   ifdef DYNAMIC_MARKS
-    if (hhdr -> hb_n_uncollectable == HBLK_OBJS(hhdr -> hb_sz))
+    if (HBLK_OBJS(hhdr -> hb_sz) > 0 &&
+	hhdr -> hb_n_uncollectable == HBLK_OBJS(hhdr -> hb_sz))
 	return;
 #   endif
     GC_clear_hdr_marks(hhdr);

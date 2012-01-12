@@ -513,8 +513,11 @@ GC_API void GC_CALL GC_free(void * p)
         obj_link(p) = *flh;
         *flh = (ptr_t)p;
 #       ifdef DYNAMIC_MARKS
-	if (flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE)
+	if (flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE) {
+	    clear_mark_flags_from_hdr(hhdr, bit_no, GC_FLAG_UNCOLLECTABLE);
 	    --hhdr -> hb_n_uncollectable;
+	    GC_non_gc_bytes -= sz;
+	}
 #       endif
         UNLOCK();
     } else {

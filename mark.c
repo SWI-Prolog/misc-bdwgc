@@ -270,13 +270,16 @@ GC_API void GC_set_flags(void *ptr, unsigned flags)
     hdr * hhdr = HDR(h);
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
 
+    LOCK();
     if ( (flags&GC_FLAG_UNCOLLECTABLE) &&
 	 !(flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE) ) {
         ++hhdr->hb_n_uncollectable;
         if ( !mark_bit_from_hdr(hhdr, bit_no) )
 	    ++hhdr -> hb_n_marks;
+	GC_non_gc_bytes += hhdr -> hb_sz;
     }
     set_mark_flags_from_hdr(hhdr, bit_no, flags);
+    UNLOCK();
 }
 
 GC_API void GC_clear_flags(void *ptr, unsigned flags)
@@ -286,14 +289,17 @@ GC_API void GC_clear_flags(void *ptr, unsigned flags)
     hdr * hhdr = HDR(h);
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
 
+    LOCK();
     if ( (flags&GC_FLAG_UNCOLLECTABLE) &&
 	 (flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE) ) {
         --hhdr->hb_n_uncollectable;
+	GC_non_gc_bytes -= hhdr -> hb_sz;
 //      if ( mark_bit_from_hdr(hhdr, bit_no) )
 //	    --hhdr -> hb_n_marks;		/* dangerous? */
     }
 
     clear_mark_flags_from_hdr(hhdr, bit_no, flags);
+    UNLOCK();
 }
 #endif /*DYNAMIC_MARKS*/
 

@@ -160,6 +160,7 @@ GC_INNER void GC_clear_hdr_marks(hdr *hhdr)
 		*mp &= ~GC_FLAG_MARKED;
 	}
 	hhdr -> hb_n_marks = uncollectable;
+	GC_ASSERT(hhdr -> hb_n_uncollectable == uncollectable);
     } else {
         BZERO(hhdr -> hb_marks, sizeof(hhdr->hb_marks));
 	hhdr -> hb_n_marks = 0;
@@ -265,10 +266,12 @@ GC_API int GC_CALL GC_is_marked(const void *p)
 
 GC_API void GC_set_flags(void *ptr, unsigned flags)
 {
-    ptr_t p = ptr;
+    ptr_t p = GC_base(ptr);			/* Only needed in debug mode */
     struct hblk *h = HBLKPTR(p);
     hdr * hhdr = HDR(h);
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
+
+    GC_ASSERT(hhdr -> hb_sz <= MAXOBJBYTES || bit_no == 0);
 
     LOCK();
     if ( (flags&GC_FLAG_UNCOLLECTABLE) &&
@@ -284,10 +287,12 @@ GC_API void GC_set_flags(void *ptr, unsigned flags)
 
 GC_API void GC_clear_flags(void *ptr, unsigned flags)
 {
-    ptr_t p = ptr;
+    ptr_t p = GC_base(ptr);
     struct hblk *h = HBLKPTR(p);
     hdr * hhdr = HDR(h);
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
+
+    GC_ASSERT(hhdr -> hb_sz <= MAXOBJBYTES || bit_no == 0);
 
     LOCK();
     if ( (flags&GC_FLAG_UNCOLLECTABLE) &&

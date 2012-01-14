@@ -525,6 +525,11 @@ GC_API void GC_CALL GC_free(void * p)
         LOCK();
         GC_bytes_freed += sz;
         if (IS_UNCOLLECTABLE(knd)) GC_non_gc_bytes -= sz;
+#       ifdef DYNAMIC_MARKS
+	if (flags_from_hdr(hhdr, 0)&GC_FLAG_UNCOLLECTABLE) {
+	    GC_non_gc_bytes -= sz;
+	}
+#endif
         if (nblocks > 1) {
           GC_large_allocd_bytes -= nblocks * HBLKSIZE;
         }

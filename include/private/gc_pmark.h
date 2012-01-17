@@ -436,6 +436,10 @@ GC_INNER mse * GC_mark_from(mse * top, mse * bottom, mse *limit);
     } \
 }
 
+#ifdef DYNAMIC_MARKS
+GC_INNER void GC_set_finalize(void *ptr);
+#endif
+
 GC_EXTERN GC_bool GC_mark_stack_too_small;
                                 /* We need a larger mark stack.  May be */
                                 /* set by client supplied mark routines.*/

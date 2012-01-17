@@ -306,6 +306,24 @@ GC_API void GC_clear_flags(void *ptr, unsigned flags)
     clear_mark_flags_from_hdr(hhdr, bit_no, flags);
     UNLOCK();
 }
+
+/*
+ * If we call GC_register_finalizer() on a temporary uncollectable
+ * object, we must mark it because it might have been reachable.
+ */
+
+GC_INNER void GC_set_finalize(void *ptr)
+{
+    ptr_t p = GC_base(ptr);
+    struct hblk *h = HBLKPTR(p);
+    hdr * hhdr = HDR(h);
+    word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
+
+    if ( flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE ) {
+        set_mark_bit_from_hdr(hhdr, bit_no);
+    }
+}
+
 #endif /*DYNAMIC_MARKS*/
 
 /*

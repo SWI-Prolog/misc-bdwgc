@@ -473,6 +473,9 @@ STATIC void GC_register_finalizer_inner(void * obj,
     fo_set_next(new_fo, GC_fo_head[index]);
     GC_fo_entries++;
     GC_fo_head[index] = new_fo;
+#ifdef DYNAMIC_MARKS
+    GC_set_finalize(base);
+#endif
     UNLOCK();
 }
 

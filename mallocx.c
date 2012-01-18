@@ -69,6 +69,26 @@ STATIC void * GC_generic_or_special_malloc(size_t lb, int knd)
     }
 }
 
+#ifdef DYNAMIC_MARKS
+STATIC void GC_set_dynamic_flags(void *ptr, unsigned flags, ssize_t grow)
+{
+    if ( flags & GC_FLAG_UNCOLLECTABLE ) {
+        ptr_t p = ptr;
+	struct hblk *h = HBLKPTR(p);
+	hdr * hhdr = HDR(h);
+	word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
+
+	GC_ASSERT(hhdr -> hb_sz <= MAXOBJBYTES || bit_no == 0);
+
+	set_mark_flags_from_hdr(hhdr, bit_no, flags);
+	hhdr -> hb_n_uncollectable++;
+	GC_non_gc_bytes += grow;
+    }
+}
+#else
+#define GC_set_dynamic_flags(ptr, flags, grow) (void)0
+#endif
+
 /* Change the size of the block pointed to by p to contain at least   */
 /* lb bytes.  The object may be (and quite likely will be) moved.     */
 /* The kind (e.g. atomic) is the same as that of the old.             */
@@ -80,6 +100,9 @@ GC_API void * GC_CALL GC_realloc(void * p, size_t lb)
     size_t sz;   /* Current size in bytes       */
     size_t orig_sz;      /* Original sz in bytes        */
     int obj_kind;
+#   ifdef DYNAMIC_MARKS
+    unsigned flags;
+#   endif
 
     if (p == 0) return(GC_malloc(lb));  /* Required by ANSI */
     h = HBLKPTR(p);
@@ -87,6 +110,9 @@ GC_API void * GC_CALL GC_realloc(void * p, size_t lb)
     sz = hhdr -> hb_sz;
     obj_kind = hhdr -> hb_obj_kind;
     orig_sz = sz;
+#   ifdef DYNAMIC_MARKS
+    flags = flags_from_hdr(hhdr, MARK_BIT_NO((ptr_t)p - (ptr_t)h, sz));
+#   endif
 
     if (sz > MAXOBJBYTES) {
         /* Round it up to the next whole heap block */
@@ -126,6 +152,7 @@ GC_API void * GC_CALL GC_realloc(void * p, size_t lb)
               if (result == 0) return(0);
                   /* Could also return original object.  But this       */
                   /* gives the client warning of imminent disaster.     */
+	      GC_set_dynamic_flags(result, flags, sz - orig_sz);
               BCOPY(p, result, lb);
 #             ifndef IGNORE_FREE
                 GC_free(p);
@@ -138,6 +165,7 @@ GC_API void * GC_CALL GC_realloc(void * p, size_t lb)
                 GC_generic_or_special_malloc((word)lb, obj_kind);
 
           if (result == 0) return(0);
+	  GC_set_dynamic_flags(result, flags, sz - orig_sz);
           BCOPY(p, result, sz);
 #         ifndef IGNORE_FREE
             GC_free(p);

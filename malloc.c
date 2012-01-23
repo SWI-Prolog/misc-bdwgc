@@ -515,6 +515,8 @@ GC_API void GC_CALL GC_free(void * p)
 #       ifdef DYNAMIC_MARKS
 	if (flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE) {
 	    clear_mark_flags_from_hdr(hhdr, bit_no, GC_FLAG_UNCOLLECTABLE);
+	    if ( !mark_bit_from_hdr(hhdr, bit_no) && hhdr -> hb_n_marks > 1 )
+	      --hhdr -> hb_n_marks;
 	    --hhdr -> hb_n_uncollectable;
 	    GC_non_gc_bytes -= sz;
 	}

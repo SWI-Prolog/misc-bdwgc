@@ -789,6 +789,9 @@ STATIC void GC_clear_fl_marks(ptr_t q)
 
      for (;;) {
         bit_no = MARK_BIT_NO((ptr_t)q - (ptr_t)h, sz);
+#ifdef	DYNAMIC_MARKS
+	GC_ASSERT(!(flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE));
+#endif
         if (mark_bit_from_hdr(hhdr, bit_no)) {
           size_t n_marks = hhdr -> hb_n_marks - 1;
           clear_mark_bit_from_hdr(hhdr, bit_no);

@@ -303,8 +303,7 @@ GC_API void GC_clear_flags(void *ptr, unsigned flags)
 	 (flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE) ) {
         --hhdr->hb_n_uncollectable;
 	GC_non_gc_bytes -= hhdr -> hb_sz;
-//      if ( mark_bit_from_hdr(hhdr, bit_no) )
-//	    --hhdr -> hb_n_marks;		/* dangerous? */
+	set_mark_bit_from_hdr(hhdr, bit_no);
     }
 
     clear_mark_flags_from_hdr(hhdr, bit_no, flags);

@@ -509,18 +509,17 @@ GC_API void GC_CALL GC_free(void * p)
         if (ok -> ok_init) {
             BZERO((word *)p + 1, sz-sizeof(word));
         }
-        flh = &(ok -> ok_freelist[ngranules]);
-        obj_link(p) = *flh;
-        *flh = (ptr_t)p;
 #       ifdef DYNAMIC_MARKS
 	if (flags_from_hdr(hhdr, bit_no)&GC_FLAG_UNCOLLECTABLE) {
+	    set_mark_bit_from_hdr(hhdr, bit_no);
 	    clear_mark_flags_from_hdr(hhdr, bit_no, GC_FLAG_UNCOLLECTABLE);
-	    if ( !mark_bit_from_hdr(hhdr, bit_no) && hhdr -> hb_n_marks > 1 )
-	      --hhdr -> hb_n_marks;
 	    --hhdr -> hb_n_uncollectable;
 	    GC_non_gc_bytes -= sz;
 	}
 #       endif
+        flh = &(ok -> ok_freelist[ngranules]);
+        obj_link(p) = *flh;
+        *flh = (ptr_t)p;
         UNLOCK();
     } else {
         size_t nblocks = OBJ_SZ_TO_BLOCKS(sz);

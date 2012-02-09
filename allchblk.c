@@ -245,6 +245,9 @@ static GC_bool setup_header(hdr * hhdr, struct hblk *block, size_t byte_sz,
       descr = GC_obj_kinds[kind].ok_descriptor;
       if (GC_obj_kinds[kind].ok_relocate_descr) descr += byte_sz;
       hhdr -> hb_descr = descr;
+#   ifdef DYNAMIC_MARKS
+      hhdr -> hb_n_uncollectable = 0;
+#   endif
 
 #   ifdef MARK_BIT_PER_OBJ
      /* Set hb_inv_sz as portably as possible.                          */

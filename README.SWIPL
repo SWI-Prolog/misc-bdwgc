@@ -1,0 +1,33 @@
+Boehm-Demers-Weiser conservative garbage collector for SWI-Prolog
+
+This is a modified version of the Boehm-Demers-Weiser garbage collector.
+In a nutshell, this version allows changing   the status of objects from
+managed to unmanaged and back. Managed   objects  are normal GC objects,
+while unmanaged objects are not reclaimed and   not checked. The idea is
+to add objects to the global   datastructures as unmanaged. This greatly
+reduces the GC overhead on a many Gb-sized   heap. If a global object is
+about to be freed, but  we  cannot  be   sure  that  the  object  is not
+referenced by some thread,  its  change   is  changed  to  `managed' and
+reclaiming is left to the garbage collector.
+
+These extensions are enabled using the configure option
+
+	--enable-swipl-support
+
+In  addition,  the  libatomic_ops  library  has  been  added  as  a  git
+submodule. To build the collector from the GIT source, do:
+
+	cd bdwgc
+	git submodule update --init
+	autoreconf -vif
+	automake --add-missing
+	./configure --enable-swipl-support --enable-large-config
+	make
+
+Other configure options used are:
+
+  - Linux: --enable-threads=pthreads --enable-parallel-mark
+
+For debugging, use --enable-gc-assertions
+
+	Enjoy --- Jan (jan@swi-prolog.org)

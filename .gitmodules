@@ -1,0 +1,3 @@
+[submodule "libatomic_ops"]
+	path = libatomic_ops
+	url = git://github.com/ivmai/libatomic_ops.git

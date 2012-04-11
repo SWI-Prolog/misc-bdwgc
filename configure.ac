@@ -670,6 +670,13 @@ if test x"$enable_gcj_support" != xno; then
     AC_DEFINE(GC_GCJ_SUPPORT, 1, [Define to include support for gcj.])
 fi
 
+AC_ARG_ENABLE(swipl-support,
+    [AC_HELP_STRING([--enable-swipl-support],
+        [Enable support for SWI-Prolog.])])
+if test x"$enable_swipl_support" == xyes; then
+    AC_DEFINE(DYNAMIC_MARKS, 1, [Define to include support for SWI-Prolog.])
+fi
+
 dnl Debugging
 dnl ---------
 

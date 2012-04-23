@@ -311,6 +311,23 @@ GC_API void GC_clear_flags(void *ptr, unsigned flags)
 }
 
 /*
+ * Fetch current flags (for debugging)
+ */
+
+GC_INNER unsigned int GC_flags(void *ptr)
+{
+    ptr_t p = GC_base(ptr);
+    struct hblk *h = HBLKPTR(p);
+    hdr * hhdr = HDR(h);
+    word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
+
+    GC_ASSERT(hhdr -> hb_sz <= MAXOBJBYTES || bit_no == 0);
+
+    return flags_from_hdr(hhdr, bit_no);
+}
+
+
+/*
  * If we call GC_register_finalizer() on a temporary uncollectable
  * object, we must mark it because it might have been reachable.
  */

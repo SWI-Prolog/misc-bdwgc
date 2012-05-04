@@ -321,8 +321,8 @@ GC_API void * GC_CALL GC_malloc_uncollectable(size_t lb)
         /* pointer.  We do need to hold the lock while we adjust        */
         /* mark bits.                                                   */
         LOCK();
-        set_mark_bit_from_hdr(hhdr, 0); /* Only object. */
         GC_ASSERT(hhdr -> hb_n_marks == 0);
+        set_mark_bit_from_hdr(hhdr, 0); /* Only object. */
         hhdr -> hb_n_marks = 1;
         UNLOCK();
         return((void *) op);

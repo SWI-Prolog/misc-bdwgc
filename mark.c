@@ -270,7 +270,7 @@ GC_API int GC_CALL GC_is_marked(const void *p)
 
 GC_API void GC_set_flags(void *ptr, unsigned flags)
 {
-    ptr_t p = GC_base(ptr);			/* Only needed in debug mode */
+    ptr_t p = ptr;
     struct hblk *h = HBLKPTR(p);
     hdr * hhdr = HDR(h);
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
@@ -289,9 +289,15 @@ GC_API void GC_set_flags(void *ptr, unsigned flags)
     UNLOCK();
 }
 
-GC_API void GC_clear_flags(void *ptr, unsigned flags)
+GC_API void GC_debug_set_flags(void *ptr, unsigned flags)
 {
     ptr_t p = GC_base(ptr);
+    GC_set_flags(p, flags);
+}
+
+GC_API void GC_clear_flags(void *ptr, unsigned flags)
+{
+    ptr_t p = ptr;
     struct hblk *h = HBLKPTR(p);
     hdr * hhdr = HDR(h);
     word bit_no = MARK_BIT_NO(p - (ptr_t)h, hhdr -> hb_sz);
@@ -308,6 +314,12 @@ GC_API void GC_clear_flags(void *ptr, unsigned flags)
 
     clear_mark_flags_from_hdr(hhdr, bit_no, flags);
     UNLOCK();
+}
+
+GC_API void GC_debug_clear_flags(void *ptr, unsigned flags)
+{
+    ptr_t p = GC_base(ptr);
+    GC_clear_flags(p, flags);
 }
 
 /*

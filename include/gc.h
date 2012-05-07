@@ -438,8 +438,18 @@ GC_API void GC_CALL GC_end_stubborn_change(const void *) GC_ATTR_NONNULL(1);
 #define GC_FLAG_UNCOLLECTABLE 0x2	/* uncollectable object */
 #define GC_FLAG_ATOMIC        0x4	/* atomic object */
 
+#ifdef GC_DEBUG
+#define GC_SET_FLAGS(ptr, flags) GC_debug_set_flags(ptr, flags)
+#define GC_CLEAR_FLAGS(ptr, flags) GC_debug_clear_flags(ptr, flags)
+#else
+#define GC_SET_FLAGS(ptr, flags) GC_set_flags(ptr, flags)
+#define GC_CLEAR_FLAGS(ptr, flags) GC_clear_flags(ptr, flags)
+#endif
+
 GC_API void GC_set_flags(void *p, unsigned flags);
 GC_API void GC_clear_flags(void *p, unsigned flags);
+GC_API void GC_debug_set_flags(void *p, unsigned flags);
+GC_API void GC_debug_clear_flags(void *p, unsigned flags);
 #endif
 
 /* Return a pointer to the base (lowest address) of an object given     */

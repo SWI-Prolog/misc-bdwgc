@@ -199,6 +199,14 @@ GC_API void * GC_CALL GC_generic_malloc(size_t lb, int k)
                 ((word *)result)[GRANULES_TO_WORDS(lg)-2] = 0;
 #           endif
           }
+	  if ( IS_UNCOLLECTABLE(k) ) {
+	    hdr * hhdr;
+
+	    hhdr = HDR(result);
+	    GC_ASSERT(hhdr -> hb_n_marks == 0);
+	    set_mark_bit_from_hdr(hhdr, 0); /* Only object. */
+	    hhdr -> hb_n_marks = 1;
+	  }
         }
         GC_bytes_allocd += lb_rounded;
         UNLOCK();
@@ -310,22 +318,7 @@ GC_API void * GC_CALL GC_malloc_uncollectable(size_t lb)
         GC_ASSERT(0 == op || GC_is_marked(op));
         return((void *) op);
     } else {
-        hdr * hhdr;
-
-        op = (ptr_t)GC_generic_malloc((word)lb, UNCOLLECTABLE);
-        if (0 == op) return(0);
-
-        GC_ASSERT(((word)op & (HBLKSIZE - 1)) == 0); /* large block */
-        hhdr = HDR(op);
-        /* We don't need the lock here, since we have an undisguised    */
-        /* pointer.  We do need to hold the lock while we adjust        */
-        /* mark bits.                                                   */
-        LOCK();
-        GC_ASSERT(hhdr -> hb_n_marks == 0);
-        set_mark_bit_from_hdr(hhdr, 0); /* Only object. */
-        hhdr -> hb_n_marks = 1;
-        UNLOCK();
-        return((void *) op);
+        return GC_generic_malloc((word)lb, UNCOLLECTABLE);
     }
 }
 
